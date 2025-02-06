@@ -84,6 +84,8 @@
         canvas.height = box * 20;
 
         let snake, food, direction, gameOver, gameInterval;
+        let colors = ["red", "yellow", "blue", "green", "purple"];
+        let colorIndex = 0;
 
         function initGame() {
             snake = [
@@ -136,10 +138,15 @@
             for (let i = 0; i < snake.length; i++) {
                 ctx.fillStyle = "green";
                 ctx.fillRect(snake[i].x, snake[i].y, box, box);
-                ctx.fillStyle = "white";
-                ctx.font = "14px Arial";
-                ctx.fillText("YADI", snake[i].x + 3, snake[i].y + 18);
             }
+
+            // Tulis "YADI" hanya di kepala ular dengan warna yang berubah-ubah
+            ctx.fillStyle = colors[colorIndex];
+            ctx.font = "14px Arial";
+            ctx.fillText("YADI", snake[0].x + 3, snake[0].y + 18);
+            
+            // Ganti warna "YADI" setiap frame
+            colorIndex = (colorIndex + 1) % colors.length;
 
             let newHead = { x: snake[0].x, y: snake[0].y };
             if (direction === "UP") newHead.y -= box;
