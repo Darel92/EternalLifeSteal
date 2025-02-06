@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Ular YADI</title>
+    <title>Game Ular YADI - 60 FPS</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             display: flex;
             flex-direction: column;
@@ -40,12 +36,8 @@
             user-select: none;
             font-weight: bold;
         }
-        .btn:active {
-            background: gray;
-        }
-        .empty {
-            visibility: hidden;
-        }
+        .btn:active { background: gray; }
+        .empty { visibility: hidden; }
         #restartBtn {
             display: none;
             margin-top: 10px;
@@ -57,9 +49,7 @@
             color: white;
             cursor: pointer;
         }
-        #restartBtn:hover {
-            background: darkred;
-        }
+        #restartBtn:hover { background: darkred; }
     </style>
 </head>
 <body>
@@ -83,9 +73,11 @@
         canvas.width = box * 20;
         canvas.height = box * 20;
 
-        let snake, food, direction, gameOver, gameInterval;
+        let snake, food, direction, gameOver;
         let colors = ["red", "yellow", "blue", "green", "purple"];
         let colorIndex = 0;
+        let lastUpdateTime = 0;
+        let moveSpeed = 100; // Ular bergerak setiap 100ms
 
         function initGame() {
             snake = [
@@ -101,8 +93,8 @@
             direction = "RIGHT";
             gameOver = false;
             document.getElementById("restartBtn").style.display = "none";
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(draw, 150);
+            lastUpdateTime = performance.now();
+            requestAnimationFrame(gameLoop);
         }
 
         document.addEventListener("keydown", (event) => {
@@ -119,35 +111,25 @@
             if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
         }
 
-        function draw() {
+        function gameLoop(currentTime) {
             if (gameOver) {
                 ctx.fillStyle = "white";
                 ctx.font = "30px Arial";
                 ctx.fillText("Game Over", canvas.width / 4, canvas.height / 2);
                 document.getElementById("restartBtn").style.display = "block";
-                clearInterval(gameInterval);
                 return;
             }
 
-            ctx.fillStyle = "#111";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(gameLoop);
 
-            ctx.fillStyle = "red";
-            ctx.fillRect(food.x, food.y, box, box);
-
-            for (let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = "green";
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            if (currentTime - lastUpdateTime > moveSpeed) {
+                lastUpdateTime = currentTime;
+                update();
+                draw();
             }
+        }
 
-            // Tulis "YADI" hanya di kepala ular dengan warna yang berubah-ubah
-            ctx.fillStyle = colors[colorIndex];
-            ctx.font = "14px Arial";
-            ctx.fillText("YADI", snake[0].x + 3, snake[0].y + 18);
-            
-            // Ganti warna "YADI" setiap frame
-            colorIndex = (colorIndex + 1) % colors.length;
-
+        function update() {
             let newHead = { x: snake[0].x, y: snake[0].y };
             if (direction === "UP") newHead.y -= box;
             if (direction === "DOWN") newHead.y += box;
@@ -162,6 +144,7 @@
                 snake.some(segment => segment.x === newHead.x && segment.y === newHead.y)
             ) {
                 gameOver = true;
+                return;
             }
 
             if (newHead.x === food.x && newHead.y === food.y) {
@@ -174,6 +157,26 @@
             }
 
             snake.unshift(newHead);
+        }
+
+        function draw() {
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = "green";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+
+                // Tulisan "YADI" di setiap segmen badan ular
+                ctx.fillStyle = colors[(colorIndex + i) % colors.length];
+                ctx.font = "14px Arial";
+                ctx.fillText("YADI", snake[i].x + 3, snake[i].y + 18);
+            }
+
+            colorIndex = (colorIndex + 1) % colors.length;
         }
 
         function restartGame() {
