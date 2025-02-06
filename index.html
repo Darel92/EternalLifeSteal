@@ -74,10 +74,10 @@
         canvas.height = box * 20;
 
         let snake, food, direction, gameOver;
-        let colors = ["red", "yellow", "blue", "green", "purple"];
-        let colorIndex = 0;
         let lastUpdateTime = 0;
         let moveSpeed = 100; // Ular bergerak setiap 100ms
+        const tailImage = new Image(); // Gambar untuk ekor
+        tailImage.src = "yadi.png"; // Ganti dengan path gambar "yadi.png" Anda
 
         function initGame() {
             snake = [
@@ -170,13 +170,19 @@
                 ctx.fillStyle = "green";
                 ctx.fillRect(snake[i].x, snake[i].y, box, box);
 
-                // Tulisan "YADI" di setiap segmen badan ular
-                ctx.fillStyle = colors[(colorIndex + i) % colors.length];
-                ctx.font = "14px Arial";
-                ctx.fillText("YADI", snake[i].x + 3, snake[i].y + 18);
+                // Tulisan "YADI" hanya muncul satu kali di kepala ular dan berwarna hitam
+                if (i === 0) {
+                    ctx.fillStyle = "black";
+                    ctx.font = "16px Arial";
+                    ctx.fillText("YADI", snake[i].x + 3, snake[i].y + 18);
+                }
             }
 
-            colorIndex = (colorIndex + 1) % colors.length;
+            // Menambahkan gambar ekor ular
+            let tail = snake[snake.length - 1];
+            if (tailImage.complete) {
+                ctx.drawImage(tailImage, tail.x, tail.y, box, box);
+            }
         }
 
         function restartGame() {
