@@ -23,41 +23,43 @@
             border: 2px solid white;
         }
         .controls {
-            display: flex;
-            flex-wrap: wrap;
-            width: 150px;
-            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            gap: 5px;
+            margin-top: 15px;
         }
         .btn {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: white;
-            border: 1px solid black;
-            font-size: 20px;
+            border: 2px solid black;
+            font-size: 24px;
             text-align: center;
-            line-height: 50px;
+            line-height: 60px;
             cursor: pointer;
             user-select: none;
+            font-weight: bold;
         }
         .btn:active {
             background: gray;
         }
-        .up {
-            margin-left: 50px;
-        }
-        .down {
-            margin-left: 50px;
+        .empty {
+            visibility: hidden;
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+
     <div class="controls">
-        <div class="btn up" onclick="changeDirection('UP')">↑</div>
-        <div class="btn left" onclick="changeDirection('LEFT')">←</div>
-        <div class="btn right" onclick="changeDirection('RIGHT')">→</div>
-        <div class="btn down" onclick="changeDirection('DOWN')">↓</div>
+        <div class="empty"></div>
+        <div class="btn" onclick="changeDirection('UP')">↑</div>
+        <div class="empty"></div>
+        <div class="btn" onclick="changeDirection('LEFT')">←</div>
+        <div class="btn" onclick="changeDirection('DOWN')">↓</div>
+        <div class="btn" onclick="changeDirection('RIGHT')">→</div>
     </div>
+
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
